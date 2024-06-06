@@ -224,7 +224,7 @@ MonoBehaviour:
   m_MinSize: {x: 403, y: 492}
   m_MaxSize: {x: 10001, y: 14042}
   vertical: 1
-  controlID: 49
+  controlID: 37
   draggingID: 0
 --- !u!114 &10
 MonoBehaviour:
@@ -334,14 +334,14 @@ MonoBehaviour:
   m_LastFolders:
   - Assets
   m_LastFoldersGridSize: -1
-  m_LastProjectPath: C:\Users\steph\Documents\Match3PuzzleGame\development\Match3PuzzleGame
+  m_LastProjectPath: C:\Users\steph\Documents\Match3PuzzleGame\development
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 50610000
-    m_LastClickedID: 24912
-    m_ExpandedIDs: 000000005061000000ca9a3b
+    m_SelectedIDs: 5c610000
+    m_LastClickedID: 24924
+    m_ExpandedIDs: 000000005c61000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -369,7 +369,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 
+    m_ExpandedIDs: 000000005c610000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -511,7 +511,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: f6faffff
+      m_ExpandedIDs: 16fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
