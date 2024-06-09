@@ -180,30 +180,50 @@ public class GridManager : MonoBehaviour
 
     public void FindMatches()
     {
-        List<GameObject> matches = new List<GameObject>();
+        List<GameObject> allMatches = new List<GameObject>();
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                matches.AddRange(CheckMatches(x, y, Vector2.right));
-                matches.AddRange(CheckMatches(x, y, Vector2.up));
+                GameObject tile = grid[x, y];
+                if (tile != null)
+                {
+                    List<GameObject> horizontalMatches = CheckMatches(x, y, Vector2.right);
+                    List<GameObject> verticalMatches = CheckMatches(x, y, Vector2.up);
+
+                    if (horizontalMatches.Count >= 3)
+                    {
+                        allMatches.AddRange(horizontalMatches);
+                    }
+
+                    if (verticalMatches.Count >= 3)
+                    {
+                        allMatches.AddRange(verticalMatches);
+                    }
+                }
             }
         }
 
-        if (matches.Count > 0)
+        if (allMatches.Count > 0)
         {
-            Debug.Log("Matches found: " + matches.Count);
-            // Remove matched tiles
-            foreach (var match in matches)
-            {
-                Destroy(match);
-            }
+            RemoveMatches(allMatches);
         }
         else
         {
             Debug.Log("No matches found.");
         }
     }
+
+    public void RemoveMatches(List<GameObject> matchedTiles)
+    {
+        foreach (GameObject tile in matchedTiles)
+        {
+            Vector2Int pos = GetTilePosition(tile);
+            grid[pos.x, pos.y] = null;
+            Destroy(tile);
+        }
+    }
+
 
 }
