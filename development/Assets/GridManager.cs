@@ -186,7 +186,7 @@ public class GridManager : MonoBehaviour
     }
 
 
-    public void FindMatches()
+    public List<GameObject> FindMatches()
     {
         List<GameObject> matchedTiles = new List<GameObject>();
         List<GameObject> allMatches = new List<GameObject>();  // Declare allMatches list here
@@ -234,6 +234,7 @@ public class GridManager : MonoBehaviour
         if (matchedTiles.Count > 0)
         {
             Debug.Log($"Matches found: {matchedTiles.Count}");
+            allMatches.AddRange(matchedTiles);
         }
         else
         {
@@ -245,6 +246,7 @@ public class GridManager : MonoBehaviour
             Debug.Log($"Total matches to clear: {allMatches.Count}");
             ClearMatches(allMatches);  // Call ClearMatches with allMatches
         }
+        return allMatches;
     }
 
     public void ClearMatches(List<GameObject> matchedTiles)
@@ -257,6 +259,7 @@ public class GridManager : MonoBehaviour
         }
         Debug.Log("Matches cleared");
         RefillGrid();
+        CheckForCascadingMatches();
     }
 
     void RefillGrid()
@@ -275,7 +278,7 @@ public class GridManager : MonoBehaviour
             }
         }
         Debug.Log("Grid refilled");
-        FindMatches();  // Check for new matches after refilling
+        CheckForCascadingMatches();
     }
 
     public void RemoveMatches(List<GameObject> matchedTiles)
@@ -285,6 +288,19 @@ public class GridManager : MonoBehaviour
             Vector2Int pos = GetTilePosition(tile);
             grid[pos.x, pos.y] = null;
             Destroy(tile);
+        }
+    }
+
+    void CheckForCascadingMatches()
+    {
+        while (true)
+        {
+            List<GameObject> newMatches = FindMatches();
+            if (newMatches.Count == 0)
+            {
+                break;
+            }
+            ClearMatches(newMatches);
         }
     }
 
