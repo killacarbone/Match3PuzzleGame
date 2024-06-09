@@ -180,40 +180,56 @@ public class GridManager : MonoBehaviour
 
     public void FindMatches()
     {
-        List<GameObject> allMatches = new List<GameObject>();
+        List<GameObject> matchedTiles = new List<GameObject>();
 
-        for (int x = 0; x < width; x++)
+        // Check rows for matches
+        for (int y = 0; y < height; y++)
         {
-            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width - 2; x++)
             {
-                GameObject tile = grid[x, y];
-                if (tile != null)
+                GameObject tile1 = grid[x, y];
+                GameObject tile2 = grid[x + 1, y];
+                GameObject tile3 = grid[x + 2, y];
+
+                if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
+                    tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
                 {
-                    List<GameObject> horizontalMatches = CheckMatches(x, y, Vector2.right);
-                    List<GameObject> verticalMatches = CheckMatches(x, y, Vector2.up);
-
-                    if (horizontalMatches.Count >= 3)
-                    {
-                        allMatches.AddRange(horizontalMatches);
-                    }
-
-                    if (verticalMatches.Count >= 3)
-                    {
-                        allMatches.AddRange(verticalMatches);
-                    }
+                    if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
+                    if (!matchedTiles.Contains(tile2)) matchedTiles.Add(tile2);
+                    if (!matchedTiles.Contains(tile3)) matchedTiles.Add(tile3);
                 }
             }
         }
 
-        if (allMatches.Count > 0)
+        // Check columns for matches
+        for (int x = 0; x < width; x++)
         {
-            RemoveMatches(allMatches);
+            for (int y = 0; y < height - 2; y++)
+            {
+                GameObject tile1 = grid[x, y];
+                GameObject tile2 = grid[x, y + 1];
+                GameObject tile3 = grid[x, y + 2];
+
+                if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
+                    tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
+                {
+                    if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
+                    if (!matchedTiles.Contains(tile2)) matchedTiles.Add(tile2);
+                    if (!matchedTiles.Contains(tile3)) matchedTiles.Add(tile3);
+                }
+            }
+        }
+
+        if (matchedTiles.Count > 0)
+        {
+            Debug.Log($"Matches found: {matchedTiles.Count}");
         }
         else
         {
             Debug.Log("No matches found.");
         }
     }
+
 
     public void RemoveMatches(List<GameObject> matchedTiles)
     {
