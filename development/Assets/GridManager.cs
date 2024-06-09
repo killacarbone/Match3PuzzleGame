@@ -189,6 +189,9 @@ public class GridManager : MonoBehaviour
     public void FindMatches()
     {
         List<GameObject> matchedTiles = new List<GameObject>();
+        List<GameObject> allMatches = new List<GameObject>();  // Declare allMatches list here
+
+        //
 
         // Check rows for matches
         for (int y = 0; y < height; y++)
@@ -236,8 +239,44 @@ public class GridManager : MonoBehaviour
         {
             Debug.Log("No matches found.");
         }
+
+        if (allMatches.Count > 0)
+        {
+            Debug.Log($"Total matches to clear: {allMatches.Count}");
+            ClearMatches(allMatches);  // Call ClearMatches with allMatches
+        }
     }
 
+    public void ClearMatches(List<GameObject> matchedTiles)
+    {
+        foreach (GameObject tile in matchedTiles)
+        {
+            Vector2Int position = GetTilePosition(tile);
+            grid[position.x, position.y] = null;
+            Destroy(tile);
+        }
+        Debug.Log("Matches cleared");
+        RefillGrid();
+    }
+
+    void RefillGrid()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (grid[x, y] == null)
+                {
+                    Vector3 position = new Vector3(x, y, 0);
+                    GameObject tile = Instantiate(tilePrefab, position, Quaternion.identity);
+                    tile.GetComponent<SpriteRenderer>().color = new Color(Random.value, Random.value, Random.value);
+                    grid[x, y] = tile;
+                }
+            }
+        }
+        Debug.Log("Grid refilled");
+        FindMatches();  // Check for new matches after refilling
+    }
 
     public void RemoveMatches(List<GameObject> matchedTiles)
     {
