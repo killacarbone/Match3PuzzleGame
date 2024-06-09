@@ -14,12 +14,12 @@ public class GridManager : MonoBehaviour
 
     void Start()
     {
+        grid = new GameObject[width, height];  // Initialize the grid array
         GenerateGrid();
     }
 
     void GenerateGrid()
     {
-        grid = new GameObject[width, height];
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -27,10 +27,18 @@ public class GridManager : MonoBehaviour
                 Vector3 position = new Vector3(x, y, 0);
                 GameObject tile = Instantiate(tilePrefab, position, Quaternion.identity);
                 tile.GetComponent<SpriteRenderer>().color = new Color(Random.value, Random.value, Random.value);
-                tile.AddComponent<TileInteraction>();
                 grid[x, y] = tile;
             }
         }
+
+        // Temporary solution for visual confirmation of matches
+        grid[0, 0].GetComponent<SpriteRenderer>().color = Color.red;
+        grid[1, 0].GetComponent<SpriteRenderer>().color = Color.red;
+        grid[2, 0].GetComponent<SpriteRenderer>().color = Color.red;
+
+        grid[0, 1].GetComponent<SpriteRenderer>().color = Color.green;
+        grid[0, 2].GetComponent<SpriteRenderer>().color = Color.green;
+        grid[0, 3].GetComponent<SpriteRenderer>().color = Color.green;
     }
 
     public void OnTileClicked(GameObject tile)
