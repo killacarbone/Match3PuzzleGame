@@ -4,11 +4,14 @@ public class TileInteraction : MonoBehaviour
 {
     private SpriteRenderer spriteRenderer;
     private static GameObject firstTile;
+    private GridManager gridManager;
+
 
 
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        gridManager = FindObjectOfType<GridManager>();  // This line will find the GridManager instance in the scene
     }
 
     void OnMouseDown()
@@ -28,14 +31,22 @@ public class TileInteraction : MonoBehaviour
         }
     }
 
-    void SwapTiles(GameObject tile1, GameObject tile2)
+    public void SwapTiles(GameObject tile1, GameObject tile2)
     {
-        // Swap the positions of the two tiles
         Vector3 tempPosition = tile1.transform.position;
         tile1.transform.position = tile2.transform.position;
         tile2.transform.position = tempPosition;
 
-        Debug.Log("Tiles swapped: " + tile1.name + " and " + tile2.name);
+        // Swap references in the grid
+        Vector2Int tile1Pos = gridManager.GetTilePosition(tile1);
+        Vector2Int tile2Pos = gridManager.GetTilePosition(tile2);
+
+        gridManager.grid[tile1Pos.x, tile1Pos.y] = tile2;
+        gridManager.grid[tile2Pos.x, tile2Pos.y] = tile1;
+
+        Debug.Log($"Tiles swapped: {tile1.name} and {tile2.name}");
+
+        gridManager.FindMatches();
     }
 
 }

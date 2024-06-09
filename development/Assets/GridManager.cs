@@ -6,7 +6,8 @@ public class GridManager : MonoBehaviour
     public int width;
     public int height;
     public GameObject tilePrefab;
-    private GameObject[,] grid;
+    public GameObject[,] grid; // Make this public
+
     private List<GameObject> matchedTiles = new List<GameObject>();
 
 
@@ -161,7 +162,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private Vector2Int GetTilePosition(GameObject tile)
+    public Vector2Int GetTilePosition(GameObject tile)
     {
         for (int x = 0; x < width; x++)
         {
@@ -173,7 +174,36 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-        return new Vector2Int(-1, -1); // Return an invalid position if the tile is not found
+        return Vector2Int.zero; // This should never happen
+    }
+
+
+    public void FindMatches()
+    {
+        List<GameObject> matches = new List<GameObject>();
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                matches.AddRange(CheckMatches(x, y, Vector2.right));
+                matches.AddRange(CheckMatches(x, y, Vector2.up));
+            }
+        }
+
+        if (matches.Count > 0)
+        {
+            Debug.Log("Matches found: " + matches.Count);
+            // Remove matched tiles
+            foreach (var match in matches)
+            {
+                Destroy(match);
+            }
+        }
+        else
+        {
+            Debug.Log("No matches found.");
+        }
     }
 
 }
