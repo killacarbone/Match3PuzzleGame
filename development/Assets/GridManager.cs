@@ -70,7 +70,7 @@ public class GridManager : MonoBehaviour
         return Vector2Int.zero; // Should not happen
     }
 
-    List<GameObject> CheckMatches(int startX, int startY, Vector2Int direction)
+    List<GameObject> CheckMatches(int startX, int startY, Vector2? direction = null)
     {
         List<GameObject> matches = new List<GameObject>();
         GameObject startTile = grid[startX, startY];
@@ -79,25 +79,101 @@ public class GridManager : MonoBehaviour
         if (startRenderer == null) return matches;
 
         Color startColor = startRenderer.color;
-        int x = startX + direction.x;
-        int y = startY + direction.y;
+        Vector2[] directions = direction.HasValue ? new Vector2[] { direction.Value } : new Vector2[] { Vector2.right, Vector2.up };
 
-        while (x >= 0 && x < width && y >= 0 && y < height)
+        foreach (var dir in directions)
         {
-            GameObject nextTile = grid[x, y];
-            SpriteRenderer nextRenderer = nextTile.GetComponent<SpriteRenderer>();
+            List<GameObject> currentMatches = new List<GameObject>();
+            currentMatches.Add(startTile);
 
-            if (nextRenderer == null || nextRenderer.color != startColor)
+            int x = startX;
+            int y = startY;
+
+            while (true)
             {
-                break;
+                x += (int)dir.x;
+                y += (int)dir.y;
+
+                if (x >= 0 && x < width && y >= 0 && y < height)
+                {
+                    GameObject nextTile = grid[x, y];
+                    SpriteRenderer nextRenderer = nextTile.GetComponent<SpriteRenderer>();
+
+                    if (nextRenderer == null || nextRenderer.color != startColor)
+                    {
+                        break;
+                    }
+
+                    currentMatches.Add(nextTile);
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            matches.Add(nextTile);
-            x += direction.x;
-            y += direction.y;
+            if (currentMatches.Count >= 3)
+            {
+                matches.AddRange(currentMatches);
+            }
         }
-
         return matches;
+    }
+
+    public void SwapAndCheckMatches(GameObject tile1, GameObject tile2)
+    {
+        // Swap positions of tile1 and tile2 in the grid
+        Vector3 tempPosition = tile1.transform.position;
+        tile1.transform.position = tile2.transform.position;
+        tile2.transform.position = tempPosition;
+
+        // Swap references in the grid array
+        Vector2Int tile1Pos = GetTilePosition(tile1);
+        Vector2Int tile2Pos = GetTilePosition(tile2);
+
+        grid[tile1Pos.x, tile1Pos.y] = tile2;
+        grid[tile2Pos.x, tile2Pos.y] = tile1;
+
+        // Check for matches from both tiles
+        List<GameObject> matches = new List<GameObject>();
+        matches.AddRange(CheckMatches(tile1Pos.x, tile1Pos.y));
+        matches.AddRange(CheckMatches(tile2Pos.x, tile2Pos.y));
+
+        // If no matches, swap back
+        if (matches.Count < 3)
+        {
+            // Swap back positions
+            tempPosition = tile1.transform.position;
+            tile1.transform.position = tile2.transform.position;
+            tile2.transform.position = tempPosition;
+
+            // Swap references back in the grid array
+            grid[tile1Pos.x, tile1Pos.y] = tile1;
+            grid[tile2Pos.x, tile2Pos.y] = tile2;
+        }
+        else
+        {
+            // Destroy matched tiles
+            foreach (GameObject match in matches)
+            {
+                Destroy(match);
+            }
+        }
+    }
+
+    private Vector2Int GetTilePosition(GameObject tile)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (grid[x, y] == tile)
+                {
+                    return new Vector2Int(x, y);
+                }
+            }
+        }
+        return new Vector2Int(-1, -1); // Return an invalid position if the tile is not found
     }
 
 }
