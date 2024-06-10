@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class GridManager : MonoBehaviour
 {
@@ -7,12 +8,18 @@ public class GridManager : MonoBehaviour
     public int height;
     public GameObject tilePrefab;
     public Tile[,] grid; // Change this to Tile[,]
+    private TileReplacementLogic tileReplacementLogic;
 
     private List<Tile> matchedTiles = new List<Tile>();
 
     void Start()
     {
         grid = new Tile[width, height];
+        tileReplacementLogic = GetComponent<TileReplacementLogic>();
+        if (tileReplacementLogic == null)
+        {
+            Debug.LogError("TileReplacementLogic component is missing from the GridManager GameObject.");
+        }
         GenerateGrid();
     }
 
@@ -110,7 +117,7 @@ public class GridManager : MonoBehaviour
         return matches;
     }
 
-    public IEnumerator<object> SwapAndCheckMatches(Tile tile1, Tile tile2)
+    public IEnumerator SwapAndCheckMatches(Tile tile1, Tile tile2)
     {
         // Swap positions of tile1 and tile2 in the grid
         Vector3 tempPosition = tile1.transform.position;
@@ -159,7 +166,9 @@ public class GridManager : MonoBehaviour
                 Destroy(match.gameObject);
             }
             Debug.Log("Matches found and tiles destroyed.");
-            // TODO: Implement grid refill and cascading matches
+            // Call ClearMatches and ReplaceTiles
+            ClearMatches(matches);
+            tileReplacementLogic.ReplaceTiles(); // Call the replacement logic here
         }
     }
 
@@ -191,7 +200,8 @@ public class GridManager : MonoBehaviour
                 Tile tile2 = grid[x + 1, y];
                 Tile tile3 = grid[x + 2, y];
 
-                if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
+                if (tile1 != null && tile2 != null && tile3 != null &&
+                    tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
                     tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
                 {
                     if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
@@ -210,7 +220,8 @@ public class GridManager : MonoBehaviour
                 Tile tile2 = grid[x, y + 1];
                 Tile tile3 = grid[x, y + 2];
 
-                if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
+                if (tile1 != null && tile2 != null && tile3 != null &&
+                    tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
                     tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
                 {
                     if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
@@ -234,14 +245,26 @@ public class GridManager : MonoBehaviour
 
     public void ClearMatches(List<Tile> matchedTiles)
     {
+        if (matchedTiles == null)
+        {
+            Debug.LogError("matchedTiles list is null");
+            return;
+        }
+
         foreach (Tile tile in matchedTiles)
         {
+            if (tile == null)
+            {
+                Debug.LogError("One of the matched tiles is null");
+                continue;
+            }
+
             Vector2Int position = tile.GetPosition();
             grid[position.x, position.y] = null;
             Destroy(tile.gameObject);
         }
         Debug.Log("Matches cleared");
-        RefillGrid();
+        tileReplacementLogic.ReplaceTiles(); // Call the replacement logic here
         CheckForCascadingMatches();
     }
 
