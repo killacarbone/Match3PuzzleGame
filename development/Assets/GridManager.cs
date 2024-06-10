@@ -6,15 +6,13 @@ public class GridManager : MonoBehaviour
     public int width;
     public int height;
     public GameObject tilePrefab;
-    public GameObject[,] grid; // Make this public
+    public Tile[,] grid; // Change this to Tile[,]
 
-    private List<GameObject> matchedTiles = new List<GameObject>();
-
-
+    private List<Tile> matchedTiles = new List<Tile>();
 
     void Start()
     {
-        grid = new GameObject[width, height];  // Initialize the grid array
+        grid = new Tile[width, height];
         GenerateGrid();
     }
 
@@ -25,28 +23,28 @@ public class GridManager : MonoBehaviour
             for (int y = 0; y < height; y++)
             {
                 Vector3 position = new Vector3(x, y, 0);
-                GameObject tile = Instantiate(tilePrefab, position, Quaternion.identity);
-                tile.GetComponent<SpriteRenderer>().color = new Color(Random.value, Random.value, Random.value);
+                Tile tile = Instantiate(tilePrefab, position, Quaternion.identity).GetComponent<Tile>();
+                tile.Initialize(new Color(Random.value, Random.value, Random.value), x, y);
                 grid[x, y] = tile;
             }
         }
 
         // Temporary solution for visual confirmation of matches
-        grid[0, 0].GetComponent<SpriteRenderer>().color = Color.red;
-        grid[1, 0].GetComponent<SpriteRenderer>().color = Color.red;
-        grid[2, 0].GetComponent<SpriteRenderer>().color = Color.red;
+        grid[0, 0].SetColor(Color.red);
+        grid[1, 0].SetColor(Color.red);
+        grid[2, 0].SetColor(Color.red);
 
-        grid[0, 1].GetComponent<SpriteRenderer>().color = Color.green;
-        grid[0, 2].GetComponent<SpriteRenderer>().color = Color.green;
-        grid[0, 3].GetComponent<SpriteRenderer>().color = Color.green;
+        grid[0, 1].SetColor(Color.green);
+        grid[0, 2].SetColor(Color.green);
+        grid[0, 3].SetColor(Color.green);
     }
 
-    public void OnTileClicked(GameObject tile)
+    public void OnTileClicked(Tile tile)
     {
         Debug.Log("Tile clicked in GridManager: " + tile.name);
-        Vector2Int tilePos = FindTilePosition(tile);
-        List<GameObject> horizontalMatches = CheckMatches(tilePos.x, tilePos.y, Vector2Int.right);
-        List<GameObject> verticalMatches = CheckMatches(tilePos.x, tilePos.y, Vector2Int.up);
+        Vector2Int tilePos = tile.GetPosition();
+        List<Tile> horizontalMatches = CheckMatches(tilePos.x, tilePos.y, Vector2Int.right);
+        List<Tile> verticalMatches = CheckMatches(tilePos.x, tilePos.y, Vector2Int.up);
 
         if (horizontalMatches.Count >= 3)
         {
@@ -58,41 +56,25 @@ public class GridManager : MonoBehaviour
             matchedTiles.AddRange(verticalMatches);
         }
 
-        foreach (GameObject matchedTile in matchedTiles)
+        foreach (Tile matchedTile in matchedTiles)
         {
-            matchedTile.GetComponent<SpriteRenderer>().color = Color.white; // For example, mark matched tiles
+            matchedTile.SetColor(Color.white); // For example, mark matched tiles
         }
     }
 
-    Vector2Int FindTilePosition(GameObject tile)
+    List<Tile> CheckMatches(int startX, int startY, Vector2? direction = null)
     {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (grid[x, y] == tile)
-                {
-                    return new Vector2Int(x, y);
-                }
-            }
-        }
-        return Vector2Int.zero; // Should not happen
-    }
+        List<Tile> matches = new List<Tile>();
+        Tile startTile = grid[startX, startY];
 
-    List<GameObject> CheckMatches(int startX, int startY, Vector2? direction = null)
-    {
-        List<GameObject> matches = new List<GameObject>();
-        GameObject startTile = grid[startX, startY];
-        SpriteRenderer startRenderer = startTile.GetComponent<SpriteRenderer>();
+        if (startTile == null) return matches;
 
-        if (startRenderer == null) return matches;
-
-        Color startColor = startRenderer.color;
+        Color startColor = startTile.GetColor();
         Vector2[] directions = direction.HasValue ? new Vector2[] { direction.Value } : new Vector2[] { Vector2.right, Vector2.up };
 
         foreach (var dir in directions)
         {
-            List<GameObject> currentMatches = new List<GameObject>();
+            List<Tile> currentMatches = new List<Tile>();
             currentMatches.Add(startTile);
 
             int x = startX;
@@ -105,10 +87,9 @@ public class GridManager : MonoBehaviour
 
                 if (x >= 0 && x < width && y >= 0 && y < height)
                 {
-                    GameObject nextTile = grid[x, y];
-                    SpriteRenderer nextRenderer = nextTile.GetComponent<SpriteRenderer>();
+                    Tile nextTile = grid[x, y];
 
-                    if (nextRenderer == null || nextRenderer.color != startColor)
+                    if (nextTile == null || nextTile.GetColor() != startColor)
                     {
                         break;
                     }
@@ -129,7 +110,7 @@ public class GridManager : MonoBehaviour
         return matches;
     }
 
-    public void SwapAndCheckMatches(GameObject tile1, GameObject tile2)
+    public IEnumerator<object> SwapAndCheckMatches(Tile tile1, Tile tile2)
     {
         // Swap positions of tile1 and tile2 in the grid
         Vector3 tempPosition = tile1.transform.position;
@@ -143,14 +124,22 @@ public class GridManager : MonoBehaviour
         grid[tile1Pos.x, tile1Pos.y] = tile2;
         grid[tile2Pos.x, tile2Pos.y] = tile1;
 
+        // Debug log for swapped positions
+        Debug.Log($"Swapped: {tile1.name} with {tile2.name}");
+        Debug.Log($"New Position - {tile1.name}: {tile1.transform.position}");
+        Debug.Log($"New Position - {tile2.name}: {tile2.transform.position}");
+
+        yield return new WaitForSeconds(0.5f); // Adding a short delay for visual effect
+
         // Check for matches from both tiles
-        List<GameObject> matches = new List<GameObject>();
+        List<Tile> matches = new List<Tile>();
         matches.AddRange(CheckMatches(tile1Pos.x, tile1Pos.y));
         matches.AddRange(CheckMatches(tile2Pos.x, tile2Pos.y));
 
         // If no matches, swap back
         if (matches.Count < 3)
         {
+
             // Swap back positions
             tempPosition = tile1.transform.position;
             tile1.transform.position = tile2.transform.position;
@@ -159,18 +148,22 @@ public class GridManager : MonoBehaviour
             // Swap references back in the grid array
             grid[tile1Pos.x, tile1Pos.y] = tile1;
             grid[tile2Pos.x, tile2Pos.y] = tile2;
+
+            Debug.Log("Swapped back as no matches were found.");
         }
         else
         {
             // Destroy matched tiles
-            foreach (GameObject match in matches)
+            foreach (Tile match in matches)
             {
-                Destroy(match);
+                Destroy(match.gameObject);
             }
+            Debug.Log("Matches found and tiles destroyed.");
+            // TODO: Implement grid refill and cascading matches
         }
     }
 
-    public Vector2Int GetTilePosition(GameObject tile)
+    public Vector2Int GetTilePosition(Tile tile)
     {
         for (int x = 0; x < width; x++)
         {
@@ -185,22 +178,18 @@ public class GridManager : MonoBehaviour
         return Vector2Int.zero; // This should never happen
     }
 
-
-    public List<GameObject> FindMatches()
+    public List<Tile> FindMatches()
     {
-        List<GameObject> matchedTiles = new List<GameObject>();
-        List<GameObject> allMatches = new List<GameObject>();  // Declare allMatches list here
-
-        //
+        List<Tile> matchedTiles = new List<Tile>();
 
         // Check rows for matches
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width - 2; x++)
             {
-                GameObject tile1 = grid[x, y];
-                GameObject tile2 = grid[x + 1, y];
-                GameObject tile3 = grid[x + 2, y];
+                Tile tile1 = grid[x, y];
+                Tile tile2 = grid[x + 1, y];
+                Tile tile3 = grid[x + 2, y];
 
                 if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
                     tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
@@ -217,9 +206,9 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < height - 2; y++)
             {
-                GameObject tile1 = grid[x, y];
-                GameObject tile2 = grid[x, y + 1];
-                GameObject tile3 = grid[x, y + 2];
+                Tile tile1 = grid[x, y];
+                Tile tile2 = grid[x, y + 1];
+                Tile tile3 = grid[x, y + 2];
 
                 if (tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
                     tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
@@ -234,28 +223,22 @@ public class GridManager : MonoBehaviour
         if (matchedTiles.Count > 0)
         {
             Debug.Log($"Matches found: {matchedTiles.Count}");
-            allMatches.AddRange(matchedTiles);
         }
         else
         {
             Debug.Log("No matches found.");
         }
 
-        if (allMatches.Count > 0)
-        {
-            Debug.Log($"Total matches to clear: {allMatches.Count}");
-            ClearMatches(allMatches);  // Call ClearMatches with allMatches
-        }
-        return allMatches;
+        return matchedTiles;
     }
 
-    public void ClearMatches(List<GameObject> matchedTiles)
+    public void ClearMatches(List<Tile> matchedTiles)
     {
-        foreach (GameObject tile in matchedTiles)
+        foreach (Tile tile in matchedTiles)
         {
-            Vector2Int position = GetTilePosition(tile);
+            Vector2Int position = tile.GetPosition();
             grid[position.x, position.y] = null;
-            Destroy(tile);
+            Destroy(tile.gameObject);
         }
         Debug.Log("Matches cleared");
         RefillGrid();
@@ -271,8 +254,8 @@ public class GridManager : MonoBehaviour
                 if (grid[x, y] == null)
                 {
                     Vector3 position = new Vector3(x, y, 0);
-                    GameObject tile = Instantiate(tilePrefab, position, Quaternion.identity);
-                    tile.GetComponent<SpriteRenderer>().color = new Color(Random.value, Random.value, Random.value);
+                    Tile tile = Instantiate(tilePrefab, position, Quaternion.identity).GetComponent<Tile>();
+                    tile.SetColor(new Color(Random.value, Random.value, Random.value));
                     grid[x, y] = tile;
                 }
             }
@@ -281,21 +264,11 @@ public class GridManager : MonoBehaviour
         CheckForCascadingMatches();
     }
 
-    public void RemoveMatches(List<GameObject> matchedTiles)
-    {
-        foreach (GameObject tile in matchedTiles)
-        {
-            Vector2Int pos = GetTilePosition(tile);
-            grid[pos.x, pos.y] = null;
-            Destroy(tile);
-        }
-    }
-
     void CheckForCascadingMatches()
     {
         while (true)
         {
-            List<GameObject> newMatches = FindMatches();
+            List<Tile> newMatches = FindMatches();
             if (newMatches.Count == 0)
             {
                 break;
@@ -303,6 +276,4 @@ public class GridManager : MonoBehaviour
             ClearMatches(newMatches);
         }
     }
-
-
 }
