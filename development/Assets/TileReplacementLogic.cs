@@ -30,8 +30,10 @@ public class TileReplacementLogic : MonoBehaviour
                             gridManager.grid[x, i].transform.position = new Vector3(x, i, 0);
                         }
                     }
-                    gridManager.grid[x, gridManager.height - 1] = Instantiate(gridManager.tilePrefab, new Vector3(x, gridManager.height - 1, 0), Quaternion.identity).GetComponent<Tile>();
-                    gridManager.grid[x, gridManager.height - 1].Initialize(new Color(Random.value, Random.value, Random.value), x, gridManager.height - 1);
+                    Tile newTile = Instantiate(gridManager.tilePrefab, new Vector3(x, gridManager.height - 1, 0), Quaternion.identity).GetComponent<Tile>();
+                    Color color = gridManager.GetColors()[Random.Range(0, gridManager.GetColors().Length)]; // Use the new method to access colors
+                    newTile.Initialize(color, x, gridManager.height - 1);
+                    gridManager.grid[x, gridManager.height - 1] = newTile;
                 }
             }
         }

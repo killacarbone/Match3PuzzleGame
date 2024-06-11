@@ -9,42 +9,95 @@ public class GridManager : MonoBehaviour
     public GameObject tilePrefab;
     public Tile[,] grid; // Change this to Tile[,]
     private TileReplacementLogic tileReplacementLogic;
+    private ScoringManager scoringManager;
+
 
     private List<Tile> matchedTiles = new List<Tile>();
 
+    private Color[] colors = new Color[]
+    {
+        new Color(1f, 0f, 0f),   // Red
+        new Color(1f, 0.5f, 0f), // Orange
+        new Color(1f, 1f, 0f),   // Yellow
+        new Color(0f, 1f, 0f),   // Green
+        new Color(0f, 0f, 1f),   // Blue
+        new Color(0.29f, 0f, 0.51f), // Indigo
+        new Color(0.56f, 0f, 1f)  // Violet
+    };
+
+
     void Start()
     {
+        Debug.Log("GridManager Start Method Called");
+
         grid = new Tile[width, height];
+        Debug.Log($"Grid initialized with width: {width}, height: {height}");
+
+        Debug.Log($"Colors array length in Start: {colors.Length}"); // Add this line
+
         tileReplacementLogic = GetComponent<TileReplacementLogic>();
+        scoringManager = GetComponent<ScoringManager>();
+
         if (tileReplacementLogic == null)
         {
             Debug.LogError("TileReplacementLogic component is missing from the GridManager GameObject.");
         }
+        if (scoringManager == null)
+        {
+            Debug.LogError("ScoringManager component is missing from the GridManager GameObject.");
+        }
+
         GenerateGrid();
     }
 
+
     void GenerateGrid()
+    {
+        do
+        {
+            ClearGrid();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Vector3 position = new Vector3(x, y, 0);
+                    Tile tile = Instantiate(tilePrefab, position, Quaternion.identity).GetComponent<Tile>();
+
+                    int colorIndex = Random.Range(0, colors.Length);
+                    Debug.Log($"Colors array length: {colors.Length}, Selected color index: {colorIndex}");
+                    if (colorIndex < 0 || colorIndex >= colors.Length)
+                    {
+                        Debug.LogError($"Invalid color index {colorIndex} for colors array of length {colors.Length}");
+                        return;
+                    }
+
+                    Color color = colors[colorIndex];
+                    Debug.Log($"Assigning color index {colorIndex} at position ({x}, {y})");
+
+                    tile.Initialize(color, x, y);
+                    grid[x, y] = tile;
+                }
+            }
+        } while (FindMatches().Count < 3);
+
+        Debug.Log("Initial grid is valid with matches.");
+    }
+
+
+    void ClearGrid()
     {
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                Vector3 position = new Vector3(x, y, 0);
-                Tile tile = Instantiate(tilePrefab, position, Quaternion.identity).GetComponent<Tile>();
-                tile.Initialize(new Color(Random.value, Random.value, Random.value), x, y);
-                grid[x, y] = tile;
+                if (grid[x, y] != null)
+                {
+                    Destroy(grid[x, y].gameObject);
+                }
             }
         }
-
-        // Temporary solution for visual confirmation of matches
-        grid[0, 0].SetColor(Color.red);
-        grid[1, 0].SetColor(Color.red);
-        grid[2, 0].SetColor(Color.red);
-
-        grid[0, 1].SetColor(Color.green);
-        grid[0, 2].SetColor(Color.green);
-        grid[0, 3].SetColor(Color.green);
     }
+
 
     public void OnTileClicked(Tile tile)
     {
@@ -68,6 +121,33 @@ public class GridManager : MonoBehaviour
             matchedTile.SetColor(Color.white); // For example, mark matched tiles
         }
     }
+
+
+    public Color[] GetColors()
+    {
+        return colors;
+    }
+
+
+    private bool AreColorsEqual(Color color1, Color color2)
+    {
+        Debug.Log($"Comparing colors: {ColorToString(color1)} and {ColorToString(color2)}");
+        return color1.Equals(color2);
+    }
+
+
+    private string ColorToString(Color color)
+    {
+        if (color == colors[0]) return "Red";
+        if (color == colors[1]) return "Orange";
+        if (color == colors[2]) return "Yellow";
+        if (color == colors[3]) return "Green";
+        if (color == colors[4]) return "Blue";
+        if (color == colors[5]) return "Indigo";
+        if (color == colors[6]) return "Violet";
+        return "Unknown";
+    }
+
 
     List<Tile> CheckMatches(int startX, int startY, Vector2? direction = null)
     {
@@ -116,6 +196,7 @@ public class GridManager : MonoBehaviour
         }
         return matches;
     }
+
 
     public IEnumerator SwapAndCheckMatches(Tile tile1, Tile tile2)
     {
@@ -172,6 +253,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
+
     public Vector2Int GetTilePosition(Tile tile)
     {
         for (int x = 0; x < width; x++)
@@ -187,6 +269,7 @@ public class GridManager : MonoBehaviour
         return Vector2Int.zero; // This should never happen
     }
 
+
     public List<Tile> FindMatches()
     {
         List<Tile> matchedTiles = new List<Tile>();
@@ -201,9 +284,11 @@ public class GridManager : MonoBehaviour
                 Tile tile3 = grid[x + 2, y];
 
                 if (tile1 != null && tile2 != null && tile3 != null &&
-                    tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
-                    tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
+                AreColorsEqual(tile1.GetColor(), tile2.GetColor()) &&
+                AreColorsEqual(tile2.GetColor(), tile3.GetColor()))
+
                 {
+                    Debug.Log($"Comparing colors: {ColorToString(tile1.GetColor())} and {ColorToString(tile2.GetColor())}");
                     if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
                     if (!matchedTiles.Contains(tile2)) matchedTiles.Add(tile2);
                     if (!matchedTiles.Contains(tile3)) matchedTiles.Add(tile3);
@@ -221,9 +306,11 @@ public class GridManager : MonoBehaviour
                 Tile tile3 = grid[x, y + 2];
 
                 if (tile1 != null && tile2 != null && tile3 != null &&
-                    tile1.GetComponent<SpriteRenderer>().color == tile2.GetComponent<SpriteRenderer>().color &&
-                    tile2.GetComponent<SpriteRenderer>().color == tile3.GetComponent<SpriteRenderer>().color)
+                AreColorsEqual(tile1.GetColor(), tile2.GetColor()) &&
+                AreColorsEqual(tile2.GetColor(), tile3.GetColor()))
+
                 {
+                    Debug.Log($"Comparing colors: {ColorToString(tile1.GetColor())} and {ColorToString(tile2.GetColor())}");
                     if (!matchedTiles.Contains(tile1)) matchedTiles.Add(tile1);
                     if (!matchedTiles.Contains(tile2)) matchedTiles.Add(tile2);
                     if (!matchedTiles.Contains(tile3)) matchedTiles.Add(tile3);
@@ -242,6 +329,7 @@ public class GridManager : MonoBehaviour
 
         return matchedTiles;
     }
+
 
     public void ClearMatches(List<Tile> matchedTiles)
     {
@@ -264,9 +352,11 @@ public class GridManager : MonoBehaviour
             Destroy(tile.gameObject);
         }
         Debug.Log("Matches cleared");
+        scoringManager.UpdateScore(matchedTiles.Count * 10); // Update score based on number of tiles cleared
         tileReplacementLogic.ReplaceTiles(); // Call the replacement logic here
         CheckForCascadingMatches();
     }
+
 
     void RefillGrid()
     {
@@ -286,6 +376,7 @@ public class GridManager : MonoBehaviour
         Debug.Log("Grid refilled");
         CheckForCascadingMatches();
     }
+
 
     void CheckForCascadingMatches()
     {
