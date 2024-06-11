@@ -200,6 +200,8 @@ public class GridManager : MonoBehaviour
 
     public IEnumerator SwapAndCheckMatches(Tile tile1, Tile tile2)
     {
+        Debug.Log($"Swapping tiles: {tile1.name} with {tile2.name}");
+
         // Swap positions of tile1 and tile2 in the grid
         Vector3 tempPosition = tile1.transform.position;
         tile1.transform.position = tile2.transform.position;
@@ -212,10 +214,7 @@ public class GridManager : MonoBehaviour
         grid[tile1Pos.x, tile1Pos.y] = tile2;
         grid[tile2Pos.x, tile2Pos.y] = tile1;
 
-        // Debug log for swapped positions
-        Debug.Log($"Swapped: {tile1.name} with {tile2.name}");
-        Debug.Log($"New Position - {tile1.name}: {tile1.transform.position}");
-        Debug.Log($"New Position - {tile2.name}: {tile2.transform.position}");
+        Debug.Log($"Swapped positions: {tile1.name} is now at {tile1Pos}, {tile2.name} is now at {tile2Pos}");
 
         yield return new WaitForSeconds(0.5f); // Adding a short delay for visual effect
 
@@ -224,10 +223,11 @@ public class GridManager : MonoBehaviour
         matches.AddRange(CheckMatches(tile1Pos.x, tile1Pos.y));
         matches.AddRange(CheckMatches(tile2Pos.x, tile2Pos.y));
 
+        Debug.Log($"Found {matches.Count} matches after swapping");
+
         // If no matches, swap back
         if (matches.Count < 3)
         {
-
             // Swap back positions
             tempPosition = tile1.transform.position;
             tile1.transform.position = tile2.transform.position;
@@ -252,6 +252,9 @@ public class GridManager : MonoBehaviour
             tileReplacementLogic.ReplaceTiles(); // Call the replacement logic here
         }
     }
+
+
+
 
 
     public Vector2Int GetTilePosition(Tile tile)
@@ -339,6 +342,8 @@ public class GridManager : MonoBehaviour
             return;
         }
 
+        Debug.Log($"Clearing {matchedTiles.Count} matched tiles");
+
         foreach (Tile tile in matchedTiles)
         {
             if (tile == null)
@@ -356,6 +361,7 @@ public class GridManager : MonoBehaviour
         tileReplacementLogic.ReplaceTiles(); // Call the replacement logic here
         CheckForCascadingMatches();
     }
+
 
 
     void RefillGrid()
@@ -380,13 +386,25 @@ public class GridManager : MonoBehaviour
 
     void CheckForCascadingMatches()
     {
+        int iterationCount = 0;
+        int maxIterations = 100;  // Set a reasonable limit to prevent infinite loops
         while (true)
         {
+            iterationCount++;
+            Debug.Log($"CheckForCascadingMatches iteration: {iterationCount}");
             List<Tile> newMatches = FindMatches();
-            if (newMatches.Count == 0)
+            Debug.Log($"New matches found: {newMatches.Count}");
+
+            if (newMatches.Count == 0 || iterationCount >= maxIterations)
             {
+                if (iterationCount >= maxIterations)
+                {
+                    Debug.LogError("Reached maximum iterations in CheckForCascadingMatches, exiting to prevent infinite loop.");
+                }
+                Debug.Log("No more matches found, exiting CheckForCascadingMatches.");
                 break;
             }
+
             ClearMatches(newMatches);
         }
     }
